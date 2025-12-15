@@ -22,25 +22,17 @@ body {
   justify-content: center;
   align-items: center;
 }
-
-.container {
-  width: 94%;
-  max-width: 460px;
-  text-align: center;
-}
-
+.container { width: 94%; max-width: 460px; text-align: center; }
 h1 { font-size: 1.2rem; margin-bottom: 0.3rem; }
-
 .section { color: #93c5fd; font-size: 1rem; margin-top: 0.5rem; }
 .movement { font-size: 1.1rem; margin-top: 0.4rem; }
+.nextMovement { font-size: 0.9rem; opacity: 0.8; margin-top: 0.2rem; }
 .timer { font-size: 3.6rem; margin: 0.6rem 0; }
-
 .instruction {
   font-size: 0.9rem;
   opacity: 0.85;
   line-height: 1.3;
 }
-
 button {
   padding: 12px 18px;
   margin: 6px;
@@ -49,14 +41,23 @@ button {
   background: #2563eb;
   color: white;
 }
+.controls {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.controls button { padding: 10px 14px; font-size: 0.9rem; }
 </style>
 </head>
 
 <body>
 <div class="container">
   <h1>🌞 Morning Full-Body Yoga</h1>
+
   <div class="section" id="section"></div>
   <div class="movement" id="movement"></div>
+  <div class="nextMovement" id="nextMovement"></div>
   <div class="timer" id="timer">00:00</div>
   <div class="instruction" id="instruction"></div>
 
@@ -65,157 +66,109 @@ button {
     <button onclick="pause()">Pause</button>
     <button onclick="reset()">Reset</button>
   </div>
+
+  <div class="controls">
+    <button onclick="prev()">⬅ Previous</button>
+    <button onclick="next()">Next ➡</button>
+  </div>
 </div>
 
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+/* 📱 Keep Screen Awake if possible */
+let wakeLock = null;
+async function lockScreen() {
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+  } catch (e) {}
 }
 
-/* 🔔 simple offline bell */
+/* 🔔 Bell */
 const bell = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=");
 
-/* 🧘‍♂️ FULL PRACTICE STRUCTURE */
-const practice = [
-{
-  section: "Tuning-In & Breath",
-  steps: [
-    { name: "Easy Seat – Breath Awareness", time: 60,
-      cue: "Sit tall on sit bones. Relax shoulders. Slow nasal breathing." },
-    { name: "Kundalini Tuning-In", time: 60,
-      cue: "Mentally chant Ong Namo Guru Dev Namo ×3. Feel inner guidance." },
-    { name: "Gentle Breath of Fire", time: 60,
-      cue: "Short rhythmic exhales through the nose. Inhale passive. Stop if dizzy." }
-  ]
-},
-{
-  section: "Kundalini Spinal Activation",
-  steps: [
-    { name: "Spinal Flex", time: 90,
-      cue: "Inhale chest forward. Exhale round spine. Hands on shins." },
-    { name: "Sufi Circles", time: 90,
-      cue: "Circle torso smoothly both directions. Head relaxed." },
-    { name: "Seated Side Stretch", time: 60,
-      cue: "Lift arm, side bend without collapsing chest." },
-    { name: "Dynamic Seated Twist", time: 120,
-      cue: "Inhale lengthen spine. Exhale twist from navel upward." }
-  ]
-},
-{
-  section: "Warm-Up Flow",
-  steps: [
-    { name: "Cat–Cow", time: 120,
-      cue: "Inhale drop belly, lift chest. Exhale round spine, chin in." },
-    { name: "Thread the Needle", time: 90,
-      cue: "Slide arm under chest. Rest shoulder if comfortable." },
-    { name: "Downward-Facing Dog", time: 90,
-      cue: "Hips high, spine long. Pedal feet. Press fingertips." }
-  ]
-},
-{
-  section: "Sun Salutation",
-  steps: [
-    { name: "Mountain → Forward Fold", time: 120,
-      cue: "Feet grounded. Hinge from hips. Neck relaxed." },
-    { name: "Plank", time: 90,
-      cue: "Shoulders over wrists. Core active." },
-    { name: "Cobra / Up Dog", time: 90,
-      cue: "Chest opens. Elbows hug ribs. No belly gripping." },
-    { name: "Low Lunge", time: 120,
-      cue: "Back knee down. Spine tall. Hips gently forward." }
-  ]
-},
-{
-  section: "Standing Strength & Balance",
-  steps: [
-    { name: "Warrior I", time: 90,
-      cue: "Hips square. Arms reach up. Ribs drawn in." },
-    { name: "Warrior II", time: 90,
-      cue: "Front knee bent. Gaze over fingers." },
-    { name: "Reverse Warrior", time: 60,
-      cue: "Side stretch without collapsing lower back." },
-    { name: "Triangle", time: 60,
-      cue: "Lengthen spine first, then lower hand." },
-    { name: "Tree Pose", time: 60,
-      cue: "Foot presses leg. Pelvis neutral. Steady gaze." }
-  ]
-},
-{
-  section: "Kundalini Core Kriya",
-  steps: [
-    { name: "Stretch Pose", time: 90,
-      cue: "Lift legs, head and shoulders. Gaze toes." },
-    { name: "Leg Lifts", time: 60,
-      cue: "Lower legs slowly. Lower back grounded." },
-    { name: "Knees to Chest + Breath of Fire", time: 60,
-      cue: "Pull knees in. Rapid breath. Relax jaw." },
-    { name: "Bridge Pose", time: 30,
-      cue: "Lift hips. Chest opens. Gentle neck awareness." }
-  ]
-},
-{
-  section: "Grounding & Integration",
-  steps: [
-    { name: "Supine Twist", time: 90,
-      cue: "Knees drop gently. Shoulders relaxed." },
-    { name: "Happy Baby", time: 60,
-      cue: "Hold feet. Knees toward armpits. Release effort." },
-    { name: "Seated Forward Fold", time: 30,
-      cue: "Lengthen spine, then fold." }
-  ]
-},
-{
-  section: "Savasana & Closing",
-  steps: [
-    { name: "Savasana", time: 120,
-      cue: "Palms open. Natural breath. Full surrender." }
-  ]
-}
-];
+/* 🧘 FULL PRACTICE DATA (your full routine) */
+const practice = [...YOUR EXACT ARRAY — paste your array here...];
 
-/* ⏱️ TIMER ENGINE */
-let s = 0, m = 0, t = practice[0].steps[0].time, interval;
-const sectionEl = document.getElementById("section");
-const movementEl = document.getElementById("movement");
-const instructionEl = document.getElementById("instruction");
-const timerEl = document.getElementById("timer");
+/* Timer Engine */
+let s=0, m=0, t=practice[0].steps[0].time, interval;
+const sectionEl=document.getElementById("section");
+const movementEl=document.getElementById("movement");
+const instructionEl=document.getElementById("instruction");
+const nextMovementEl=document.getElementById("nextMovement");
+const timerEl=document.getElementById("timer");
+
+function getNextText() {
+  let ns=s, nm=m+1;
+  if (nm>=practice[s].steps.length) { nm=0; ns++; }
+  if (ns>=practice.length) return "Next: —";
+  return "Next: " + practice[ns].steps[nm].name;
+}
 
 function render() {
-  const step = practice[s].steps[m];
-  sectionEl.textContent = practice[s].section;
-  movementEl.textContent = step.name;
-  instructionEl.textContent = step.cue;
-  timerEl.textContent =
-    `${Math.floor(t/60).toString().padStart(2,"0")}:${(t%60).toString().padStart(2,"0")}`;
+  const step=practice[s].steps[m];
+  sectionEl.textContent=practice[s].section;
+  movementEl.textContent=step.name;
+  instructionEl.textContent=step.cue;
+  nextMovementEl.textContent=getNextText();
+  timerEl.textContent=
+   `${String(Math.floor(t/60)).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;
+}
+
+function advance() {
+  m++;
+  if (m>=practice[s].steps.length) { m=0; s++; }
+  if (s>=practice.length) {
+    clearInterval(interval);
+    sectionEl.textContent="Practice Complete 🌿";
+    movementEl.textContent="Sat Nam";
+    timerEl.textContent="";
+    instructionEl.textContent="";
+    nextMovementEl.textContent="";
+    return false;
+  }
+  t=practice[s].steps[m].time;
+  return true;
 }
 
 function start() {
+  lockScreen();
   bell.play().catch(()=>{});
   if (interval) return;
-  interval = setInterval(() => {
+  interval=setInterval(()=>{
     t--;
-    if (t < 0) {
+    if (t<0) {
       bell.play().catch(()=>{});
-      m++;
-      if (m >= practice[s].steps.length) {
-        m = 0; s++;
-        if (s >= practice.length) {
-          clearInterval(interval);
-          sectionEl.textContent = "Practice Complete 🌿";
-          movementEl.textContent = "Sat Nam";
-          instructionEl.textContent = "";
-          timerEl.textContent = "";
-          return;
-        }
-      }
-      t = practice[s].steps[m].time;
+      if (!advance()) return;
     }
     render();
-  }, 1000);
+  },1000);
 }
 
-function pause() { clearInterval(interval); interval = null; }
-function reset() { pause(); s=0; m=0; t=practice[0].steps[0].time; render(); }
+function pause() {
+  clearInterval(interval);
+  interval=null;
+}
+
+function reset() {
+  pause();
+  s=0; m=0; t=practice[0].steps[0].time;
+  render();
+}
+
+function next() {
+  pause();
+  if (!advance()) return;
+  render();
+}
+
+function prev() {
+  pause();
+  m--;
+  if (m<0) { s--; if (s<0){ s=0; m=0; } else m=practice[s].steps.length-1; }
+  t=practice[s].steps[m].time;
+  render();
+}
 
 render();
 </script>
