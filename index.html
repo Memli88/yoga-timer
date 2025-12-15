@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Morning Yoga Timer</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+
+<style>
+/* Your styles here — unchanged */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "San Francisco", Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.container { width: 92%; max-width: 420px; text-align: center; }
+h1 { font-size: 1.2rem; margin-bottom: 0.5rem; opacity: 0.9; }
+.section { font-size: 1.1rem; margin-bottom: 1rem; color: #93c5fd; }
+.timer { font-size: 4rem; font-weight: 600; margin: 1rem 0; }
+.buttons button {
+    font-size: 1rem;
+    padding: 12px 18px;
+    margin: 6px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+}
+.buttons button:active { background: #1e40af; }
+.footer { margin-top: 1rem; font-size: 0.8rem; opacity: 0.6; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🌞 Morning Full-Body Yoga</h1>
+    <div class="section" id="sectionName">Ready</div>
+    <div class="timer" id="timer">00:00</div>
+
+    <div class="buttons">
+        <button onclick="startTimer()">Start</button>
+        <button onclick="pauseTimer()">Pause</button>
+        <button onclick="resetTimer()">Reset</button>
+    </div>
+
+    <div class="footer">Breathe • Move • Integrate</div>
+</div>
+
+<audio id="bell">
+    <source src="https://actions.google.com/sounds/v1/alarms/meditation_bell.ogg" type="audio/ogg">
+</audio>
+
+<script>
+// your timer code — unchanged
+const sequence = [
+    { name: "Tuning-In & Breath", time: 180 },
+    { name: "Kundalini Spinal Activation", time: 300 },
+    { name: "Warm-Up Flow", time: 300 },
+    { name: "Sun Salutation Flow", time: 480 },
+    { name: "Standing Strength & Balance", time: 300 },
+    { name: "Kundalini Core Kriya", time: 240 },
+    { name: "Grounding & Integration", time: 180 },
+    { name: "Savasana & Closing", time: 120 }
+];
+
+let index = 0;
+let timeLeft = sequence[0].time;
+let interval = null;
+
+const timerEl = document.getElementById("timer");
+const sectionEl = document.getElementById("sectionName");
+const bell = document.getElementById("bell");
+
+function updateDisplay() {
+    const min = Math.floor(timeLeft / 60);
+    const sec = timeLeft % 60;
+    timerEl.textContent =
+        `${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
+    sectionEl.textContent = sequence[index].name;
+}
+
+function startTimer() {
+    if (interval) return;
+
+    interval = setInterval(() => {
+        timeLeft--;
+
+        if (timeLeft < 0) {
+            bell.play();
+            index++;
+
+            if (index >= sequence.length) {
+                clearInterval(interval);
+                interval = null;
+                sectionEl.textContent = "Practice Complete 🌿";
+                timerEl.textContent = "Sat Nam";
+                return;
+            }
+            timeLeft = sequence[index].time;
+        }
+
+        updateDisplay();
+    }, 1000);
+}
+
+function pauseTimer() {
+    clearInterval(interval);
+    interval = null;
+}
+
+function resetTimer() {
+    pauseTimer();
+    index = 0;
+    timeLeft = sequence[0].time;
+    updateDisplay();
+}
+
+updateDisplay();
+</script>
+
+<script>
+// Register PWA service worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+
+</body>
+</html>
