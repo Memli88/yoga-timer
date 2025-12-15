@@ -1,139 +1,227 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Morning Yoga Timer</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yoga Timer">
 
 <style>
-/* Your styles here — unchanged */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "San Francisco", Arial, sans-serif;
-    background: #0f172a;
-    color: #e5e7eb;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.container { width: 92%; max-width: 420px; text-align: center; }
-h1 { font-size: 1.2rem; margin-bottom: 0.5rem; opacity: 0.9; }
-.section { font-size: 1.1rem; margin-bottom: 1rem; color: #93c5fd; }
-.timer { font-size: 4rem; font-weight: 600; margin: 1rem 0; }
-.buttons button {
-    font-size: 1rem;
-    padding: 12px 18px;
-    margin: 6px;
-    border: none;
-    border-radius: 8px;
-    background: #2563eb;
-    color: white;
+
+.container {
+  width: 94%;
+  max-width: 460px;
+  text-align: center;
 }
-.buttons button:active { background: #1e40af; }
-.footer { margin-top: 1rem; font-size: 0.8rem; opacity: 0.6; }
+
+h1 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+
+.section { color: #93c5fd; font-size: 1rem; margin-top: 0.5rem; }
+.movement { font-size: 1.1rem; margin-top: 0.4rem; }
+.timer { font-size: 3.6rem; margin: 0.6rem 0; }
+
+.instruction {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  line-height: 1.3;
+}
+
+button {
+  padding: 12px 18px;
+  margin: 6px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+}
 </style>
 </head>
 
 <body>
-
 <div class="container">
-    <h1>🌞 Morning Full-Body Yoga</h1>
-    <div class="section" id="sectionName">Ready</div>
-    <div class="timer" id="timer">00:00</div>
+  <h1>🌞 Morning Full-Body Yoga</h1>
+  <div class="section" id="section"></div>
+  <div class="movement" id="movement"></div>
+  <div class="timer" id="timer">00:00</div>
+  <div class="instruction" id="instruction"></div>
 
-    <div class="buttons">
-        <button onclick="startTimer()">Start</button>
-        <button onclick="pauseTimer()">Pause</button>
-        <button onclick="resetTimer()">Reset</button>
-    </div>
-
-    <div class="footer">Breathe • Move • Integrate</div>
+  <div>
+    <button onclick="start()">Start</button>
+    <button onclick="pause()">Pause</button>
+    <button onclick="reset()">Reset</button>
+  </div>
 </div>
 
-<audio id="bell">
-    <source src="https://actions.google.com/sounds/v1/alarms/meditation_bell.ogg" type="audio/ogg">
-</audio>
-
 <script>
-// your timer code — unchanged
-const sequence = [
-    { name: "Tuning-In & Breath", time: 180 },
-    { name: "Kundalini Spinal Activation", time: 300 },
-    { name: "Warm-Up Flow", time: 300 },
-    { name: "Sun Salutation Flow", time: 480 },
-    { name: "Standing Strength & Balance", time: 300 },
-    { name: "Kundalini Core Kriya", time: 240 },
-    { name: "Grounding & Integration", time: 180 },
-    { name: "Savasana & Closing", time: 120 }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+/* 🔔 simple offline bell */
+const bell = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=");
+
+/* 🧘‍♂️ FULL PRACTICE STRUCTURE */
+const practice = [
+{
+  section: "Tuning-In & Breath",
+  steps: [
+    { name: "Easy Seat – Breath Awareness", time: 60,
+      cue: "Sit tall on sit bones. Relax shoulders. Slow nasal breathing." },
+    { name: "Kundalini Tuning-In", time: 60,
+      cue: "Mentally chant Ong Namo Guru Dev Namo ×3. Feel inner guidance." },
+    { name: "Gentle Breath of Fire", time: 60,
+      cue: "Short rhythmic exhales through the nose. Inhale passive. Stop if dizzy." }
+  ]
+},
+{
+  section: "Kundalini Spinal Activation",
+  steps: [
+    { name: "Spinal Flex", time: 90,
+      cue: "Inhale chest forward. Exhale round spine. Hands on shins." },
+    { name: "Sufi Circles", time: 90,
+      cue: "Circle torso smoothly both directions. Head relaxed." },
+    { name: "Seated Side Stretch", time: 60,
+      cue: "Lift arm, side bend without collapsing chest." },
+    { name: "Dynamic Seated Twist", time: 120,
+      cue: "Inhale lengthen spine. Exhale twist from navel upward." }
+  ]
+},
+{
+  section: "Warm-Up Flow",
+  steps: [
+    { name: "Cat–Cow", time: 120,
+      cue: "Inhale drop belly, lift chest. Exhale round spine, chin in." },
+    { name: "Thread the Needle", time: 90,
+      cue: "Slide arm under chest. Rest shoulder if comfortable." },
+    { name: "Downward-Facing Dog", time: 90,
+      cue: "Hips high, spine long. Pedal feet. Press fingertips." }
+  ]
+},
+{
+  section: "Sun Salutation",
+  steps: [
+    { name: "Mountain → Forward Fold", time: 120,
+      cue: "Feet grounded. Hinge from hips. Neck relaxed." },
+    { name: "Plank", time: 90,
+      cue: "Shoulders over wrists. Core active." },
+    { name: "Cobra / Up Dog", time: 90,
+      cue: "Chest opens. Elbows hug ribs. No belly gripping." },
+    { name: "Low Lunge", time: 120,
+      cue: "Back knee down. Spine tall. Hips gently forward." }
+  ]
+},
+{
+  section: "Standing Strength & Balance",
+  steps: [
+    { name: "Warrior I", time: 90,
+      cue: "Hips square. Arms reach up. Ribs drawn in." },
+    { name: "Warrior II", time: 90,
+      cue: "Front knee bent. Gaze over fingers." },
+    { name: "Reverse Warrior", time: 60,
+      cue: "Side stretch without collapsing lower back." },
+    { name: "Triangle", time: 60,
+      cue: "Lengthen spine first, then lower hand." },
+
+MEMLi, [2025-12-16 1:05 AM]
+{ name: "Tree Pose", time: 60,
+      cue: "Foot presses leg. Pelvis neutral. Steady gaze." }
+  ]
+},
+{
+  section: "Kundalini Core Kriya",
+  steps: [
+    { name: "Stretch Pose", time: 90,
+      cue: "Lift legs, head and shoulders. Gaze toes." },
+    { name: "Leg Lifts", time: 60,
+      cue: "Lower legs slowly. Lower back grounded." },
+    { name: "Knees to Chest + Breath of Fire", time: 60,
+      cue: "Pull knees in. Rapid breath. Relax jaw." },
+    { name: "Bridge Pose", time: 30,
+      cue: "Lift hips. Chest opens. Gentle neck awareness." }
+  ]
+},
+{
+  section: "Grounding & Integration",
+  steps: [
+    { name: "Supine Twist", time: 90,
+      cue: "Knees drop gently. Shoulders relaxed." },
+    { name: "Happy Baby", time: 60,
+      cue: "Hold feet. Knees toward armpits. Release effort." },
+    { name: "Seated Forward Fold", time: 30,
+      cue: "Lengthen spine, then fold." }
+  ]
+},
+{
+  section: "Savasana & Closing",
+  steps: [
+    { name: "Savasana", time: 120,
+      cue: "Palms open. Natural breath. Full surrender." }
+  ]
+}
 ];
 
-let index = 0;
-let timeLeft = sequence[0].time;
-let interval = null;
-
+/* ⏱️ TIMER ENGINE */
+let s = 0, m = 0, t = practice[0].steps[0].time, interval;
+const sectionEl = document.getElementById("section");
+const movementEl = document.getElementById("movement");
+const instructionEl = document.getElementById("instruction");
 const timerEl = document.getElementById("timer");
-const sectionEl = document.getElementById("sectionName");
-const bell = document.getElementById("bell");
 
-function updateDisplay() {
-    const min = Math.floor(timeLeft / 60);
-    const sec = timeLeft % 60;
-    timerEl.textContent =
-        `${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
-    sectionEl.textContent = sequence[index].name;
+function render() {
+  const step = practice[s].steps[m];
+  sectionEl.textContent = practice[s].section;
+  movementEl.textContent = step.name;
+  instructionEl.textContent = step.cue;
+  timerEl.textContent =
+    ${Math.floor(t/60).toString().padStart(2,"0")}:${(t%60).toString().padStart(2,"0")};
 }
 
-function startTimer() {
-    if (interval) return;
-
-    interval = setInterval(() => {
-        timeLeft--;
-
-        if (timeLeft < 0) {
-            bell.play();
-            index++;
-
-            if (index >= sequence.length) {
-                clearInterval(interval);
-                interval = null;
-                sectionEl.textContent = "Practice Complete 🌿";
-                timerEl.textContent = "Sat Nam";
-                return;
-            }
-            timeLeft = sequence[index].time;
+function start() {
+  bell.play().catch(()=>{});
+  if (interval) return;
+  interval = setInterval(() => {
+    t--;
+    if (t < 0) {
+      bell.play().catch(()=>{});
+      m++;
+      if (m >= practice[s].steps.length) {
+        m = 0; s++;
+        if (s >= practice.length) {
+          clearInterval(interval);
+          sectionEl.textContent = "Practice Complete 🌿";
+          movementEl.textContent = "Sat Nam";
+          instructionEl.textContent = "";
+          timerEl.textContent = "";
+          return;
         }
-
-        updateDisplay();
-    }, 1000);
+      }
+      t = practice[s].steps[m].time;
+    }
+    render();
+  }, 1000);
 }
 
-function pauseTimer() {
-    clearInterval(interval);
-    interval = null;
-}
+function pause() { clearInterval(interval); interval = null; }
+function reset() { pause(); s=0; m=0; t=practice[0].steps[0].time; render(); }
 
-function resetTimer() {
-    pauseTimer();
-    index = 0;
-    timeLeft = sequence[0].time;
-    updateDisplay();
-}
-
-updateDisplay();
+render();
 </script>
-
-<script>
-// Register PWA service worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
-}
-</script>
-
 </body>
 </html>
