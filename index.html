@@ -136,7 +136,7 @@ const practice = [
       cue: "Side stretch without collapsing lower back." },
     { name: "Triangle", time: 60,
       cue: "Lengthen spine first, then lower hand." },
-{ name: "Tree Pose", time: 60,
+    { name: "Tree Pose", time: 60,
       cue: "Foot presses leg. Pelvis neutral. Steady gaze." }
   ]
 },
@@ -186,7 +186,7 @@ function render() {
   movementEl.textContent = step.name;
   instructionEl.textContent = step.cue;
   timerEl.textContent =
-    ${Math.floor(t/60).toString().padStart(2,"0")}:${(t%60).toString().padStart(2,"0")};
+    `${Math.floor(t/60).toString().padStart(2,"0")}:${(t%60).toString().padStart(2,"0")}`;
 }
 
 function start() {
